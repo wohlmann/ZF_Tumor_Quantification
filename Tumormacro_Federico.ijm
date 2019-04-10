@@ -5,37 +5,39 @@ while (nImages>0) {
 			selectImage(nImages);
 			close();
 }
+
+			Dialog.create("advanced options");
+		//get values for particle detection:
+		  	Dialog.addMessage(" Particle Thresholding:");
+		  	Dialog.addChoice("Particle Thresholding Method: ", newArray("Default", "Huang", "Intermodes", "IsoData", "IJ_IsoData", "Li", "MaxEntropy", "Mean", "MinError", "Minimum", "Moments", "Otsu", "Percentile", "RenyiEntropy", "Shanbhag", "Triangle", "Yen"), "Otsu");
+		  	Dialog.addToSameRow();
+		  	Dialog.addCheckbox("dark background ", true);
+		  	Dialog.addSlider("Threshold Min:", 0, 65535, 161);
+		  	Dialog.addToSameRow();
+		  	Dialog.addSlider("Threshold Max:", 0, 65535, 65535);
+
+
+
+
 //getting file and Dir List:
 dir1 = getDirectory("Choose source directory "); 		//request source dir via window
 list = getFileList(dir1);								//read file list
 dir2 = getDirectory("Choose destination directory ");	//request destination dir via window
-
 //waitForUser("Number of files","convert "+list.length+" files?\nPress Esc to abort");	//check if correct number of files
-
 CACHE = dir2 + "CACHE" + File.separator;
 File.makeDirectory(CACHE);
-
 //counter for report
 N=0;													//set # of converted images=0
 IMG=0;
 //start loop:
-
-
 for (i=0; i<list.length; i++) {						//set i=0, count nuber of list items, enlagre number +1 each cycle, start cycle at brackets
 	path = dir1+list[i];							//path location translated for code
-	//waitForUser("next file="," "+path+"");
 	run("Bio-Formats Importer", "open=[path] autoscale color_mode=Default view=Hyperstack stack_order=XYCZT open_all_series");	
-	//open(path);
-	//waitForUser("openedx");
-	//title = getTitle;										//get title of actual image
-		//run("Clear Results");								//to start with an empty results table
-		//updateResults;
 	N=N+1;
 	while (nImages>0) {
 			selectImage(nImages);
 			titleS= getTitle;
 			saveAs("tif", CACHE+titleS+".tif");
-			//waitForUser("saved"+titleS+"");
 			close();
 	}
 }
@@ -44,14 +46,12 @@ listS = getFileList(CACHE);
 			pathS = CACHE+listS[j];
 			run("Bio-Formats Windowless Importer", "open=[pathS]autoscale color_mode=Default view=[Standard ImageJ] stack_order=Default");
 			title1= getTitle;
-			IMG=IMG+1;
-			//title2 = File.nameWithoutExtension;		
+			IMG=IMG+1;	
 			roiManager("reset");
 			selectWindow(title1);
 			run("Split Channels");
 			selectWindow("C2-"+title1+"");
 			run("Duplicate...", " ");
-		//waitForUser("duplicated");
 			setAutoThreshold("RenyiEntropy dark");
 			setThreshold(289, 65535);
 			setOption("BlackBackground", true);
@@ -85,7 +85,6 @@ listS = getFileList(CACHE);
 //close all windows to clean up for next round
 saveAs("Results", ""+dir2+"/Results.xls");
 
-											//counter for report
 //report
 waitForUser("Summary"," The results of "+N+" files and "+IMG+" are ready my lord");
 
