@@ -253,6 +253,8 @@ for (i=0; i<list.length; i++) {
 	ok = File.delete(CACHE);
 }
 //report
+selectWindow("Log");
+saveAs("Text", ""+dir2+"/log_analysis_"+day+"-"+month+"-"+year+"_"+hour+"h"+min+"min.txt");
 print("finished analysis at: "+day+"/"+month+"/"+year+" :: "+hour+":"+min+":"+sec+"");
 print("_");
 waitForUser("Summary"," Processed "+N+" files and "+IMG+" images. See Folder: "+dir2+"");
