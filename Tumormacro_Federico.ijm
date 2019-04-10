@@ -9,14 +9,11 @@ while (nImages>0) {
 dir1 = getDirectory("Choose source directory "); 		//request source dir via window
 list = getFileList(dir1);								//read file list
 dir2 = getDirectory("Choose destination directory ");	//request destination dir via window
-
 CACHE = dir2 + "CACHE" + File.separator;
 File.makeDirectory(CACHE);
-
-
 Dialog.create("Analysis options");
 Dialog.addChoice(" Analysis Type: ", newArray("bacteria", "tumor"), "bacteria");
-Dialog.addChoice(" relevant Channel: ", newArray("Automatic (2 vs. 3 C)", "C1", "C2"), "Automatic (2 vs. 3 C)");
+Dialog.addChoice(" relevant Channel: ", newArray("Automatic (2C vs. 3 C)", "C1-", "C2-","C3-","C4-"), "Automatic (2 vs. 3 C)");
 Dialog.addCheckbox("set detection parameters", false);
 Dialog.addCheckbox("Step-by-Step analysis", false);
 Dialog.addCheckbox("use batch mode ", true);
@@ -28,13 +25,10 @@ ADV = Dialog.getCheckbox();
 step = Dialog.getCheckbox();
 batch = Dialog.getCheckbox();
 QC = Dialog.getCheckbox();
-
 if(QC==true){
 	QCF = dir2 + "QC" + File.separator;
 File.makeDirectory(QCF);
 }
-
-
 if(ADV==true){
 	Dialog.create("Tresholding options");
 	Dialog.addChoice("  Thresholding Method: ", newArray("Default", "Huang", "Intermodes", "IsoData", "IJ_IsoData", "Li", "MaxEntropy", "Mean", "MinError", "Minimum", "Moments", "Otsu", "Percentile", "RenyiEntropy", "Shanbhag", "Triangle", "Yen"), "RenyiEntropy");
@@ -55,31 +49,30 @@ if(ADV==true){
 	//Dialog.addMessage("_________________________________________________________________________________________");
 	//Dialog.addSlider("  detection background", 1.00, 200, 80); //for later addition
 	Dialog.show;
-	TRm = Dialog.getChoice();																
-	dark = Dialog.getCheckbox();															
-	TRA = Dialog.getNumber();																
-	TRB = Dialog.getNumber();															
-	INC = Dialog.getCheckbox();														
-	if(INC==true){																		
+	TRm = Dialog.getChoice();
+	dark = Dialog.getCheckbox();
+	TRA = Dialog.getNumber();
+	TRB = Dialog.getNumber();
+	INC = Dialog.getCheckbox();
+	if(INC==true){
 		INC="include";
 	}
 		else{
 			INC="";
 		}
-	PDA = Dialog.getNumber();																
-	PDB = Dialog.getNumber();																
-	if(PDB==10000000){																		
+	PDA = Dialog.getNumber();
+	PDB = Dialog.getNumber();
+	if(PDB==10000000){
 		PDB="infinity";
 	}
-	PCA = Dialog.getNumber();																
-	PCB = Dialog.getNumber();																
+	PCA = Dialog.getNumber();
+	PCB = Dialog.getNumber();
 	//BGmean = Dialog.getNumber();	//for later addition
-
 }	else{
-		if(Meth="tumor"){
+		if(Meth=="tumor"){
 			TRm = "RenyiEntropy";
 			dark = true;
-			TRA = 289;			
+			TRA = 289;
 			TRB = 65535;
 			INC = "include";
 			PDA = 50;
@@ -88,13 +81,13 @@ if(ADV==true){
 			PCB = 1.000;
 			//BGmean=80;			//for later addition
 		}
-			else if(Meth="bacteria"){
+			else if(Meth=="bacteria"){
 				TRm = "RenyiEntropy";
 				dark = true;
-				TRA = 110;			
+				TRA = 180;
 				TRB = 65535;
 				INC = "include";
-				PDA = 2;
+				PDA = 10;
 				PDB = "infinity";
 				PCA = 0.001;
 				PCB = 1.000;
@@ -107,14 +100,13 @@ if(ADV==true){
 if (batch==true){
 	setBatchMode(true);
 }
-
 //counter for report
-N=0;													
+N=0;
 IMG=0;
 //start loop:
 for (i=0; i<list.length; i++) {						//set i=0, count nuber of list items, enlagre number +1 each cycle, start cycle at brackets
 	path = dir1+list[i];							//path location translated for code
-	run("Bio-Formats Importer", "open=[path] autoscale color_mode=Default view=Hyperstack stack_order=XYCZT open_all_series");	
+	run("Bio-Formats Importer", "open=[path] autoscale color_mode=Default view=Hyperstack stack_order=XYCZT open_all_series");
 	N=N+1;
 	while (nImages>0) {
 			selectImage(nImages);
@@ -129,16 +121,32 @@ listS = getFileList(CACHE);
 			run("Bio-Formats Windowless Importer", "open=[pathS]autoscale color_mode=Default view=[Standard ImageJ] stack_order=Default");
 			title1= getTitle;
 			title2 = File.nameWithoutExtension;
-			IMG=IMG+1;	
+			IMG=IMG+1;
 			roiManager("reset");
 			selectWindow(title1);
+			if(RelC=="Automatic (2C vs. 3 C)"){
+				Stack.getDimensions(wi,he,ch,sl,fr);
+				if(ch==3){
+					Cx="C2-";
+				}
+					else if (ch==2){
+						Cx="C1-";
+					}
+						else{
+							exit("ERROR: invalid channel order in image "+title1+"");
+						}
+			}
+				else{
+					Cx=RelC;
+				}
+			selectWindow(title1);
 			run("Split Channels");
-			selectWindow("C2-"+title1+"");
+			selectWindow(""+Cx+""+title1+"");
 			run("Duplicate...", " ");
 			if(step==true){
 				setBatchMode("show");
 				waitForUser("image"+title1+", channel to be analysed");
-			}	
+			}
 			setAutoThreshold(""+TRm+"");
 			setThreshold(TRA, TRB);
 			if(dark==true){
@@ -147,25 +155,25 @@ listS = getFileList(CACHE);
 			if(step==true){
 				setBatchMode("show");
 				waitForUser("tresholded image"+title1+"");
-			}	
+			}
 			run("Convert to Mask");
 			run("Make Binary");
 			if(step==true){
 				setBatchMode("show");
 				waitForUser("binary for image"+title1+"");
-			}	
+			}
 			run("Analyze Particles...", "size="+PDA+"-"+PDB+" circularity="+PCA+"-"+PCB+" "+INC+" add");
 			if(step==true){
 				setBatchMode("show");
 				waitForUser("ROI image"+title1+"");
-			}		
+			}
 			ROIc = roiManager("count");
 			if (ROIc==0) {
 				makeRectangle(100, 100, 50, 50);
 				roiManager("Add");
 				roiManager("select", newArray());
 				run("Clear", "slice");
-			}	
+			}
 			roiManager("Select", newArray());
 			ROIc = roiManager("count");
 			if (ROIc!=1) {
@@ -179,37 +187,35 @@ listS = getFileList(CACHE);
 				roiManager("delete");
 				ROIc = roiManager("count");
 			}
-			selectWindow("C2-"+title1+"");
+			selectWindow(""+Cx+""+title1+"");
 			roiManager("Select", 0);
 			run("Set Measurements...", "area integrated redirect=None decimal=4");
 			run("Measure");
 			if(step==true){
 				setBatchMode("show");
 				waitForUser("measured image"+title1+"");
-			}	
+			}
 			setResult("filename", nResults-1, title1);
 			updateResults();
-			
-			if(QCp == true){
-				selectWindow("C2-"+title1+"");
+			if(QC == true){
+				selectWindow(""+Cx+""+title1+"");
+				run("Enhance Contrast", "saturated=0.45");
 				roiManager("Select", 0);
 				run("Flatten");
 				saveAs("Gif", QCF+title2+"_QC_.gif");
 			}
-			
-			
-			while (nImages>0) { 
-				selectImage(nImages); 
-    			close(); 
-    		} 
-    	} 
-
+			while (nImages>0) {
+				selectImage(nImages);
+    			close();
+    		}
+    	}
 //close all windows to clean up for next round
 saveAs("Results", ""+dir2+"/Results.xls");
-
 //report
 waitForUser("Summary"," Processed "+N+" files and "+IMG+" images. See Folder "+dir2+"");
 list = getFileList(CACHE);
-                for (i=0; i<list.length; i++)
-                        ok = File.delete(CACHE+list[i]);
-                        ok = File.delete(CACHE);
+for (i=0; i<list.length; i++) {
+	ok = File.delete(CACHE+list[i]);
+	ok = File.delete(CACHE);
+}
+//JW_10.04.19
