@@ -1,10 +1,3 @@
-run("Clear Results");
-updateResults;
-roiManager("reset");
-while (nImages>0) {
-			selectImage(nImages);
-			close();
-}
 //getting file and Dir List:
 dir1 = getDirectory("Choose source directory "); 		//request source dir via window
 list = getFileList(dir1);								//read file list
@@ -97,23 +90,53 @@ if(ADV==true){
 				//moar?
 			}
 	}
+run("Close All");
+print("\\Clear");
+print("Reset: log, Results, ROI Manager");
+run("Clear Results");
+updateResults;
+roiManager("reset");
+while (nImages>0) {
+			selectImage(nImages);
+			close();
+}
 if (batch==true){
 	setBatchMode(true);
+	print("_");
+	print("running in batch mode");
 }
 //counter for report
 N=0;
 IMG=0;
+nImg=0;
 //start loop:
+print("_");
+getDateAndTime(year, month, week, day, hour, min, sec, msec);
+print("Starting analysis at: "+day+"/"+month+"/"+year+" :: "+hour+":"+min+":"+sec+"");
+print("_");
+print("analysis type = "+Meth+"");
+if(ADV==true){
+	print("using user defined values for Thresholding and detection");
+}
+print("_");
 for (i=0; i<list.length; i++) {						//set i=0, count nuber of list items, enlagre number +1 each cycle, start cycle at brackets
 	path = dir1+list[i];							//path location translated for code
+	print("start processing of "+path+"");
+	print("_");
+	print("exporting images from *.lif to single *.tif files:");
 	run("Bio-Formats Importer", "open=[path] autoscale color_mode=Default view=Hyperstack stack_order=XYCZT open_all_series");
 	N=N+1;
+	nImg=(nImg+nImages);
 	while (nImages>0) {
 			selectImage(nImages);
 			titleS= getTitle;
 			saveAs("tif", CACHE+titleS+".tif");
 			close();
+			print("exported image "+titleS+"");
+			print("_");
 	}
+	print("finished exporting single files");
+	print("_");
 }
 listS = getFileList(CACHE);
 		for (j=0; j<listS.length; j++) {
@@ -122,6 +145,8 @@ listS = getFileList(CACHE);
 			title1= getTitle;
 			title2 = File.nameWithoutExtension;
 			IMG=IMG+1;
+			print("ANALYSING IMAGE "+IMG+" of "+nImg+"");
+			print("analysing image "+title1+":");
 			roiManager("reset");
 			selectWindow(title1);
 			if(RelC=="Automatic (2C vs. 3 C)"){
@@ -139,6 +164,8 @@ listS = getFileList(CACHE);
 				else{
 					Cx=RelC;
 				}
+			print("analysing channel "+Cx+" (setting: "+RelC+")");
+			print("_");
 			selectWindow(title1);
 			run("Split Channels");
 			selectWindow(""+Cx+""+title1+"");
@@ -147,6 +174,7 @@ listS = getFileList(CACHE);
 				setBatchMode("show");
 				waitForUser("image"+title1+", channel to be analysed");
 			}
+			print("thresholding method: "+TRm+", with min "+TRA+" and max "+TRB+"");
 			setAutoThreshold(""+TRm+"");
 			setThreshold(TRA, TRB);
 			if(dark==true){
@@ -162,6 +190,7 @@ listS = getFileList(CACHE);
 				setBatchMode("show");
 				waitForUser("binary for image"+title1+"");
 			}
+			print("ROI detection values: size="+PDA+"-"+PDB+", circularity="+PCA+"-"+PCB+"");
 			run("Analyze Particles...", "size="+PDA+"-"+PDB+" circularity="+PCA+"-"+PCB+" "+INC+" add");
 			if(step==true){
 				setBatchMode("show");
@@ -169,6 +198,7 @@ listS = getFileList(CACHE);
 			}
 			ROIc = roiManager("count");
 			if (ROIc==0) {
+				print("NO ROI DETECTED for image "+title1+", generating artifical Value");
 				makeRectangle(100, 100, 50, 50);
 				roiManager("Add");
 				roiManager("select", newArray());
@@ -190,6 +220,7 @@ listS = getFileList(CACHE);
 			selectWindow(""+Cx+""+title1+"");
 			roiManager("Select", 0);
 			run("Set Measurements...", "area integrated redirect=None decimal=4");
+			print("measuring");
 			run("Measure");
 			if(step==true){
 				setBatchMode("show");
@@ -198,24 +229,31 @@ listS = getFileList(CACHE);
 			setResult("filename", nResults-1, title1);
 			updateResults();
 			if(QC == true){
+				print("saving QC image");
 				selectWindow(""+Cx+""+title1+"");
 				run("Enhance Contrast", "saturated=0.45");
 				roiManager("Select", 0);
 				run("Flatten");
 				saveAs("Gif", QCF+title2+"_QC_.gif");
 			}
+			print("_");
 			while (nImages>0) {
 				selectImage(nImages);
     			close();
     		}
     	}
-//close all windows to clean up for next round
+print("saving results");
+print("_");
 saveAs("Results", ""+dir2+"/Results.xls");
-//report
-waitForUser("Summary"," Processed "+N+" files and "+IMG+" images. See Folder "+dir2+"");
+print("deleting cache files");
+print("_");
 list = getFileList(CACHE);
 for (i=0; i<list.length; i++) {
 	ok = File.delete(CACHE+list[i]);
 	ok = File.delete(CACHE);
 }
+//report
+print("finished analysis at: "+day+"/"+month+"/"+year+" :: "+hour+":"+min+":"+sec+"");
+print("_");
+waitForUser("Summary"," Processed "+N+" files and "+IMG+" images. See Folder: "+dir2+"");
 //JW_10.04.19
