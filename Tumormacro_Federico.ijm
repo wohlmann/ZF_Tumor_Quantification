@@ -5,20 +5,6 @@ while (nImages>0) {
 			selectImage(nImages);
 			close();
 }
-
-			Dialog.create("advanced options");
-		//get values for particle detection:
-		  	Dialog.addMessage(" Particle Thresholding:");
-		  	Dialog.addChoice("Particle Thresholding Method: ", newArray("Default", "Huang", "Intermodes", "IsoData", "IJ_IsoData", "Li", "MaxEntropy", "Mean", "MinError", "Minimum", "Moments", "Otsu", "Percentile", "RenyiEntropy", "Shanbhag", "Triangle", "Yen"), "Otsu");
-		  	Dialog.addToSameRow();
-		  	Dialog.addCheckbox("dark background ", true);
-		  	Dialog.addSlider("Threshold Min:", 0, 65535, 161);
-		  	Dialog.addToSameRow();
-		  	Dialog.addSlider("Threshold Max:", 0, 65535, 65535);
-
-
-
-
 //getting file and Dir List:
 dir1 = getDirectory("Choose source directory "); 		//request source dir via window
 list = getFileList(dir1);								//read file list
